@@ -1,5 +1,5 @@
 #
-# to package: pyinstaller main.py --onefile --icon=icon.ico --name=ass
+# to package: pyinstaller main.py --onefile --icon=icon.ico --name=helix_survivae
 #
 
 import sys, os

@@ -5,8 +5,8 @@ class Enemy:
 
     def __init__(self, enemy_type: int):
         self.enemy_type = enemy_type
-        self.x_amount = round(random() * 3)
-        self.y_amount = round(random() * 3)
+        self.x_amount = round(random() * 5)
+        self.y_amount = round(random() * 5)
         self.x_counter = 0
         self.y_counter = 0
         self.x_dir = [-1, 1][randint(0, 1)]

@@ -35,12 +35,14 @@ FLASHER_MAX: Final = 10
 HEALTH_MAX: Final = 100
 HEALTH_BAR_SIZE: Final = 20
 
-TRAP_DAMAGE: Final = 20
-HEAL_AMOUNT: Final = 15
-ENEMY_SMALL_DAMAGE: Final = 10
+TRAP_DAMAGE: Final = 15
+HEAL_AMOUNT: Final = 10
+ENEMY_SMALL_DAMAGE: Final = 20
 
-HEALTH_SPAWN_CHANCE = 0.3
-ENEMY_SPAWN_CHANCE = 0.4
+HEALTH_SPAWN_CHANCE: Final = 0.3
+ENEMY_SPAWN_CHANCE: Final = 0.4
+
+DESTROY_DELAY: Final = 20
 
 
 def clamp(val, min_val, max_val):
@@ -107,7 +109,7 @@ def get_color_pair_id(obj_id):
 
 def draw_menu(stdscr):
     char_map = {
-        0: "`",
+        0: " ",
         1: "•",
         2: "•",
         3: "•",
@@ -154,6 +156,8 @@ def draw_menu(stdscr):
     time_acc = GAME_TIME
 
     flasher = FLASHER_MAX
+
+    destroy_timer = 0
 
     while k != ord('q'):
         start = time.perf_counter()
@@ -210,12 +214,13 @@ def draw_menu(stdscr):
                 tiles[player_x][player_y] = DOOR
             elif k == ord('x'):
                 tiles[player_x][player_y] = TRAP_PLACED
-            elif k == ord(' '):
+            elif k == ord(' ') and destroy_timer <= 0:
                 tiles[clamp(player_x + 1, OFFSET_START_X, t_w_max-1)][player_y] = 9
                 tiles[clamp(player_x - 1, OFFSET_START_X, t_w_max-1)][player_y] = 9
                 tiles[player_x][clamp(player_y + 1, OFFSET_START_Y, t_h_max-1)] = 9
                 tiles[player_x][clamp(player_y - 1, OFFSET_START_Y, t_h_max-1)] = 9
                 tiles[player_x][player_y] = 9
+                destroy_timer = DESTROY_DELAY
 
             # randomized spawn
             if random() * 100 <= HEALTH_SPAWN_CHANCE:
@@ -235,7 +240,7 @@ def draw_menu(stdscr):
                     x, y = floor(random() * t_w_max), t_h_max - 1
                 elif side == 4:
                     x, y = 0, floor(random() * t_h_max)
-                if int(tiles[x][y]) < PLAYER:
+                if int(tiles[x][y]) != ENEMY_SMALL:
                     tiles[x][y] = Enemy(ENEMY_SMALL)
 
             # enemy movement logic
@@ -247,20 +252,33 @@ def draw_menu(stdscr):
                         x, y = i, j
                         if tile.moving_x():
                             t_x = x + tile.get_x_dir()
-                            if (t_x < 0 or t_w_max-1 < t_x) or (int(tiles[t_x][y]) == WALL or int(tiles[t_x][y]) == DOOR):
+                            if t_x < 0 or t_w_max - 1 < t_x:
                                 tile.flip_x()
-                            elif int(tiles[t_x][y]) < PLAYER or int(tiles[t_x][y]) == TRAP_SET:
-                                x = t_x
+                            else:
+                                t_id = int(tiles[t_x][y])
+                                if t_id == WALL or t_id == DOOR or t_id == ENEMY_SMALL:
+                                    tile.flip_x()
+                                    if t_id == DOOR:
+                                        tiles[t_x][y] = 9
+                                elif int(tiles[t_x][y]) < PLAYER or int(tiles[t_x][y]) == TRAP_SET:
+                                    x = t_x
                         if tile.moving_y():
                             t_y = y + tile.get_y_dir()
-                            if (t_y < 0 or t_h_max-1 < t_y) or (int(tiles[x][t_y]) == WALL or int(tiles[x][t_y]) == DOOR):
+                            if t_y < 0 or t_h_max - 1 < t_y:
                                 tile.flip_y()
-                            elif int(tiles[x][t_y]) < PLAYER or int(tiles[x][t_y]) == TRAP_SET:
-                                y = t_y
+                            else:
+                                t_id = int(tiles[x][t_y])
+                                if t_id == WALL or t_id == DOOR or t_id == ENEMY_SMALL:
+                                    tile.flip_y()
+                                    if t_id == DOOR:
+                                        tiles[x][t_y] = 9
+                                elif t_id < PLAYER or t_id == TRAP_SET:
+                                    y = t_y
                         tiles[i][j] = 8
 
                         if int(tiles[x][y]) == TRAP_SET:
-                            tiles[x][y] = 9
+                            if randint(0, 2) == 0:
+                                tiles[x][y] = 9
                             score += 100
                             store = False
                         elif x == player_x and y == player_y:
@@ -284,9 +302,11 @@ def draw_menu(stdscr):
             # health and inventory eventually
             player_info = f"HP: [{'#' * ceil(health/HEALTH_MAX * HEALTH_BAR_SIZE)}{'-' * floor((HEALTH_MAX-health)/HEALTH_MAX * HEALTH_BAR_SIZE)}] {health:03}"
             score_bar = f" | SCORE: {score:010}"
+            destroy_bar = f" | BREAK: [{'#' * ceil(destroy_timer/DESTROY_DELAY* 6)}{'-' * floor((DESTROY_DELAY - destroy_timer)/DESTROY_DELAY*6)}]"
             stdscr.addstr(0, 1, player_info, curses.color_pair(8))
-            stdscr.addstr(0, len(player_info) + 1, score_bar, curses.color_pair(9))
-
+            stdscr.addstr(0, len(player_info) + 1, destroy_bar, curses.color_pair(9))
+            stdscr.addstr(0, len(player_info) + len(destroy_bar) + 1, score_bar, curses.color_pair(3))
+            destroy_timer = max(0, destroy_timer-1)
             # debug info maybe?
             status_bar = f"Width: {width}, Height: {height}, fps: {fps:.2f} (target is 30)"
             stdscr.addstr(height - 1, 0, status_bar, curses.color_pair(1))

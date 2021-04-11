@@ -7,9 +7,9 @@ Entry for the 24h game jam hosted on the Lazy-Developpers Discord on April 10 20
 - ~~basic logic for placing stuff~~
 - ~~health~~
 - enemies
-- enemy collisions
+- ~~enemy collisions~~
 - loot + inventory
-- dynamic probability spawn randomizer
+- ~~dynamic probability spawn randomizer~~
 - point system
 - main menu
 - pause menu

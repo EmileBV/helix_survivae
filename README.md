@@ -10,11 +10,12 @@ Entry for the 24h game jam hosted on the Lazy-Developpers Discord on April 10 20
 - ~~enemy collisions~~
 - loot + inventory
 - ~~dynamic probability spawn randomizer~~
-- point system
+- ~~point system~~
 - main menu
 - pause menu
 - quit menu
 - ~~saves~~
 - ~~some way to destroy walls~~
-- cooldown on block breaking maybe?
+- ~~cooldown on block breaking maybe?~~
+- warning for window not wide enough
  

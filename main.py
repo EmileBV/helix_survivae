@@ -28,7 +28,8 @@ OFFSET_START_Y: Final = 1
 OFFSET_END_X: Final = 0
 OFFSET_END_Y: Final = 1
 
-GAME_TIME = 1.0 / 32.0
+TARGET_FPS: Final = 40
+GAME_TIME: Final = 1.0 / TARGET_FPS
 
 FLASHER_MAX: Final = 10
 
@@ -159,13 +160,46 @@ def draw_menu(stdscr):
 
     destroy_timer = 0
 
-    while k != ord('q'):
+    running = True
+    paused = True
+
+    while running:
         start = time.perf_counter()
 
         # Frame limiter
         if time_acc >= GAME_TIME:
             fps = 1 / time_acc
             time_acc -= GAME_TIME
+
+            if k == 27:
+                paused = not paused
+
+            if paused:
+                stdscr.addstr(3, 3,  "========[MENU]========", curses.color_pair(1))
+                stdscr.addstr(4, 3,  "=                    =", curses.color_pair(1))
+                stdscr.addstr(5, 3,  "=  [Esc] Continue    =", curses.color_pair(1))
+                stdscr.addstr(6, 3,  "=   [Q]  Save&Quit   =", curses.color_pair(1))
+                stdscr.addstr(7, 3,  "=                    =", curses.color_pair(1))
+                stdscr.addstr(8, 3,  "=====[Game Facts]=====", curses.color_pair(1))
+                stdscr.addstr(9, 3,  "=                    =", curses.color_pair(1))
+                stdscr.addstr(10, 3, "=  @ -> that's you   =", curses.color_pair(1))
+                stdscr.addstr(11, 3, "=  W -> Wall [W] key =", curses.color_pair(1))
+                stdscr.addstr(12, 3, "=  D -> Door [D] key =", curses.color_pair(1))
+                stdscr.addstr(13, 3, "=  X -> Trap [X] key =", curses.color_pair(1))
+                stdscr.addstr(14, 3, "=  + -> Health       =", curses.color_pair(1))
+                stdscr.addstr(15, 3, "=  o -> Bad stuff    =", curses.color_pair(1))
+                stdscr.addstr(16, 3, "=  [Space] -> break  =", curses.color_pair(1))
+                stdscr.addstr(17, 3, "=                    =", curses.color_pair(1))
+                stdscr.addstr(18, 3, "======================", curses.color_pair(1))
+
+                if k == ord('q'):
+                    running = False
+
+                stdscr.move(0, 0)
+                stdscr.refresh()
+                # get next input
+                k = stdscr.getch()
+                continue
 
             # Initialization
             stdscr.clear()
@@ -183,8 +217,8 @@ def draw_menu(stdscr):
                 is_begin = True
 
             if is_begin:
-                player_x = round(t_w_max/2)
-                player_y = round(t_h_max/2)
+                player_x = round(t_w_max / 2)
+                player_y = round(t_h_max / 2)
                 is_begin = False
 
             target_x, target_y = player_x, player_y
@@ -197,8 +231,8 @@ def draw_menu(stdscr):
             elif k == curses.KEY_LEFT:
                 target_x = player_x - 1
 
-            target_x = clamp(target_x, 0, t_w_max-1)
-            target_y = clamp(target_y, 0, t_h_max-1)
+            target_x = clamp(target_x, 0, t_w_max - 1)
+            target_y = clamp(target_y, 0, t_h_max - 1)
 
             if int(tiles[target_x][target_y]) < WALL:
                 player_x, player_y = target_x, target_y
@@ -215,10 +249,10 @@ def draw_menu(stdscr):
             elif k == ord('x'):
                 tiles[player_x][player_y] = TRAP_PLACED
             elif k == ord(' ') and destroy_timer <= 0:
-                tiles[clamp(player_x + 1, OFFSET_START_X, t_w_max-1)][player_y] = 9
-                tiles[clamp(player_x - 1, OFFSET_START_X, t_w_max-1)][player_y] = 9
-                tiles[player_x][clamp(player_y + 1, OFFSET_START_Y, t_h_max-1)] = 9
-                tiles[player_x][clamp(player_y - 1, OFFSET_START_Y, t_h_max-1)] = 9
+                tiles[clamp(player_x + 1, OFFSET_START_X, t_w_max - 1)][player_y] = 9
+                tiles[clamp(player_x - 1, OFFSET_START_X, t_w_max - 1)][player_y] = 9
+                tiles[player_x][clamp(player_y + 1, OFFSET_START_Y, t_h_max - 1)] = 9
+                tiles[player_x][clamp(player_y - 1, OFFSET_START_Y, t_h_max - 1)] = 9
                 tiles[player_x][player_y] = 9
                 destroy_timer = DESTROY_DELAY
 
@@ -227,8 +261,8 @@ def draw_menu(stdscr):
                 x, y = floor(random() * t_w_max), floor(random() * t_h_max)
                 if tiles[x][y] < PLAYER:
                     tiles[x][y] = HEALTH_COLLECT
-            fps = ENEMY_SPAWN_CHANCE * (1 + (score/1000))
-            if random() * 100 <= ENEMY_SPAWN_CHANCE * (1 + (score/1000)):
+            # fps = ENEMY_SPAWN_CHANCE * (1 + (score/1000))
+            if random() * 100 <= ENEMY_SPAWN_CHANCE * (1 + (score / 1000)):
                 # 1: top | 2: right | 3: bottom | 4: left
                 side = randint(1, 4)
                 x, y = 0, 0
@@ -288,7 +322,6 @@ def draw_menu(stdscr):
                         if store:
                             tiles[x][y] = tile
 
-
             # damage logic
             if 0 <= int(tiles[player_x][player_y]) <= PLAYER:
                 tiles[player_x][player_y] = PLAYER
@@ -300,15 +333,15 @@ def draw_menu(stdscr):
                 tiles[player_x][player_y] = PLAYER
 
             # health and inventory eventually
-            player_info = f"HP: [{'#' * ceil(health/HEALTH_MAX * HEALTH_BAR_SIZE)}{'-' * floor((HEALTH_MAX-health)/HEALTH_MAX * HEALTH_BAR_SIZE)}] {health:03}"
+            player_info = f"HP: [{'#' * ceil(health / HEALTH_MAX * HEALTH_BAR_SIZE)}{'-' * floor((HEALTH_MAX - health) / HEALTH_MAX * HEALTH_BAR_SIZE)}] {health:03}"
             score_bar = f" | SCORE: {score:010}"
-            destroy_bar = f" | BREAK: [{'#' * ceil(destroy_timer/DESTROY_DELAY* 6)}{'-' * floor((DESTROY_DELAY - destroy_timer)/DESTROY_DELAY*6)}]"
+            destroy_bar = f" | BREAK: [{'#' * ceil(destroy_timer / DESTROY_DELAY * 6)}{'-' * floor((DESTROY_DELAY - destroy_timer) / DESTROY_DELAY * 6)}]"
             stdscr.addstr(0, 1, player_info, curses.color_pair(8))
             stdscr.addstr(0, len(player_info) + 1, destroy_bar, curses.color_pair(9))
             stdscr.addstr(0, len(player_info) + len(destroy_bar) + 1, score_bar, curses.color_pair(3))
-            destroy_timer = max(0, destroy_timer-1)
+            destroy_timer = max(0, destroy_timer - 1)
             # debug info maybe?
-            status_bar = f"Width: {width}, Height: {height}, fps: {fps:.2f} (target is 30)"
+            status_bar = f"Width: {width}, Height: {height}, fps: {fps:.2f} (target is {TARGET_FPS})"
             stdscr.addstr(height - 1, 0, status_bar, curses.color_pair(1))
 
             # draw map
@@ -319,7 +352,8 @@ def draw_menu(stdscr):
                     if 0 < tile_id <= PLAYER or (tile_id == TRAP_PLACED and (i != player_x or j != player_y)):
                         tiles[i][j] = tile_id - 1
                         tile_id = int(tiles[i][j])
-                    stdscr.addstr(j + OFFSET_START_Y, i + OFFSET_START_X, char_map[tile_id], curses.color_pair(get_color_pair_id(tile_id)))
+                    stdscr.addstr(j + OFFSET_START_Y, i + OFFSET_START_X, char_map[tile_id],
+                                  curses.color_pair(get_color_pair_id(tile_id)))
 
             if flasher > 2:
                 stdscr.addstr(cursor_y, cursor_x, char_map[PLAYER], curses.color_pair(get_color_pair_id(PLAYER)))

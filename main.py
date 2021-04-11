@@ -5,6 +5,11 @@
 import sys, os
 import curses
 import time
+from typing import Final
+
+WALL: Final = 11
+DOOR: Final = 10
+PLAYER: Final = 9
 
 
 def clamp(val, min_val, max_val):
@@ -29,6 +34,8 @@ def resize(list2d: list, new_height: int, new_width: int):
         for i in range(cur_width):
             list2d[i].extend([0 for i in range(new_height)])
 
+    return list2d
+
 
 def is_arrow(key):
     return 258 <= key <= 261
@@ -42,17 +49,20 @@ def setup_colors():
     curses.init_pair(3, curses.COLOR_BLACK, curses.COLOR_BLACK)
     curses.init_pair(4, 6, curses.COLOR_BLACK)
     curses.init_pair(5, 8, curses.COLOR_BLACK)
+    curses.init_pair(6, 9, curses.COLOR_BLACK)
 
 
 def get_color_pair_id(obj_id):
     if obj_id == 0:
         return 3
-    elif 2 <= obj_id < 9:
+    elif 2 <= obj_id < PLAYER:
         return 4
-    elif obj_id == 9:
+    elif obj_id == PLAYER:
         return 2
-    elif obj_id == 10:
+    elif obj_id == WALL:
         return 5
+    elif obj_id == DOOR:
+        return 6
     else:
         return 1
 
@@ -60,16 +70,17 @@ def get_color_pair_id(obj_id):
 def draw_menu(stdscr):
     char_map = {
         0: " ",
-        1: "*",
-        2: "*",
-        3: "o",
-        4: "o",
-        5: "O",
-        6: "O",
-        7: "0",
-        8: "0",
-        9: "@",
-        10: "W"
+        1: ".",
+        2: ".",
+        3: ".",
+        4: ".",
+        5: ".",
+        6: ".",
+        7: ".",
+        8: ".",
+        PLAYER: "@",
+        DOOR: "D",
+        WALL: "W"
     }
     k = 0
     cursor_x = 0
@@ -101,25 +112,34 @@ def draw_menu(stdscr):
             stdscr.clear()
             height, width = stdscr.getmaxyx()
 
-            resize(tiles, height, width)
+            tiles = resize(tiles, height, width)
 
+            target_x, target_y = cursor_x, cursor_y
             if k == curses.KEY_DOWN:
-                cursor_y = cursor_y + 1
+                target_y = cursor_y + 1
             elif k == curses.KEY_UP:
-                cursor_y = cursor_y - 1
+                target_y = cursor_y - 1
             elif k == curses.KEY_RIGHT:
-                cursor_x = cursor_x + 1
+                target_x = cursor_x + 1
             elif k == curses.KEY_LEFT:
-                cursor_x = cursor_x - 1
+                target_x = cursor_x - 1
+
+            target_x = clamp(target_x, 0, width - 1)
+            target_y = clamp(target_y, 0, height - 2)
+
+            if tiles[target_x][target_y] <= DOOR:
+                cursor_x, cursor_y = target_x, target_y
 
             if is_arrow(k):
                 last_dir = k
 
-            if k == ord('W'):
-                tiles[cursor_x][cursor_y] = 10
+            if k == ord('w'):
+                tiles[cursor_x][cursor_y] = WALL
+            elif k == ord('d'):
+                tiles[cursor_x][cursor_y] = DOOR
 
-            cursor_x = clamp(cursor_x, 0, width - 1)
-            cursor_y = clamp(cursor_y, 0, height - 2)
+            # cursor_x = clamp(cursor_x, 0, width - 1)
+            # cursor_y = clamp(cursor_y, 0, height - 2)
 
             # debug info maybe?
             status_bar = f"Width: {width}, Height: {height}, pressed key: {k}, fps: {fps}"
@@ -127,8 +147,8 @@ def draw_menu(stdscr):
 
             # stdscr.move(cursor_y, cursor_x)
 
-            if 0 <= tiles[cursor_x][cursor_y] <= 9:
-                tiles[cursor_x][cursor_y] = 9
+            if 0 <= tiles[cursor_x][cursor_y] <= PLAYER:
+                tiles[cursor_x][cursor_y] = PLAYER
 
             for i in range(width):
                 for j in range(height - 1):
@@ -136,10 +156,10 @@ def draw_menu(stdscr):
                     id = tiles[i][j]
                     stdscr.addstr(j, i, char_map[id], curses.color_pair(get_color_pair_id(id)))
 
-            stdscr.addstr(cursor_y, cursor_x, char_map[9], curses.color_pair(get_color_pair_id(9)))
+            stdscr.addstr(cursor_y, cursor_x, char_map[PLAYER], curses.color_pair(get_color_pair_id(PLAYER)))
 
             # decrement
-            tiles = [[max(0, i - 1 if 0 < i <= 9 else i) for i in j] for j in tiles]
+            tiles = [[max(0, i - 1 if 0 < i <= PLAYER else i) for i in j] for j in tiles]
 
             stdscr.move(0, 0)
 
@@ -151,7 +171,7 @@ def draw_menu(stdscr):
 
             fps = 1 / (time.perf_counter() - start)
 
-        time.sleep(0.001)
+        time.sleep(0.0001)
         frame_time = time.perf_counter() - start
         time_acc += frame_time
 

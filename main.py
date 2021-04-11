@@ -14,6 +14,10 @@ PLAYER: Final = 9
 TRAP_COLLECT: Final = 11
 TRAP_SET: Final = 21
 
+OFFSET_START_X: Final = 0
+OFFSET_START_Y: Final = 1
+OFFSET_END_X: Final = 0
+OFFSET_END_Y: Final = 1
 
 def clamp(val, min_val, max_val):
     return max(min_val, min(max_val, val))
@@ -83,7 +87,7 @@ def draw_menu(stdscr):
         5: "•",
         6: "•",
         7: "•",
-        8: "•",
+        8: "@",
         PLAYER: "@",
         DOOR: "D",
         WALL: "W",
@@ -124,7 +128,7 @@ def draw_menu(stdscr):
             stdscr.clear()
             height, width = stdscr.getmaxyx()
 
-            tiles = resize(tiles, height, width)
+            tiles = resize(tiles, height - OFFSET_START_Y - OFFSET_END_Y, width - OFFSET_START_X - OFFSET_END_X)
 
             target_x, target_y = cursor_x, cursor_y
             if k == curses.KEY_DOWN:
@@ -136,8 +140,8 @@ def draw_menu(stdscr):
             elif k == curses.KEY_LEFT:
                 target_x = cursor_x - 1
 
-            target_x = clamp(target_x, 0, width - 1)
-            target_y = clamp(target_y, 0, height - 2)
+            target_x = clamp(target_x, OFFSET_START_X, width - 1 - OFFSET_END_X)
+            target_y = clamp(target_y, OFFSET_START_Y, height - 1 - OFFSET_END_Y)
 
             if tiles[target_x][target_y] < WALL:
                 cursor_x, cursor_y = target_x, target_y
@@ -151,6 +155,11 @@ def draw_menu(stdscr):
                 tiles[cursor_x][cursor_y] = DOOR
             elif k == ord('x'):
                 tiles[cursor_x][cursor_y] = TRAP_SET
+            elif k == ord(' '):
+                tiles[clamp(cursor_x + 1, OFFSET_START_X, width - 1 - OFFSET_END_X)][cursor_y] = 9
+                tiles[clamp(cursor_x - 1, OFFSET_START_X, width - 1 - OFFSET_END_X)][cursor_y] = 9
+                tiles[cursor_x][clamp(cursor_y + 1, OFFSET_START_Y, height - 1 - OFFSET_END_Y)] = 9
+                tiles[cursor_x][clamp(cursor_y - 1, OFFSET_START_Y, height - 1 - OFFSET_END_Y)] = 9
 
             if 0 <= tiles[cursor_x][cursor_y] <= PLAYER:
                 tiles[cursor_x][cursor_y] = PLAYER
@@ -159,17 +168,19 @@ def draw_menu(stdscr):
             status_bar = f"Width: {width}, Height: {height}, pressed key: {k if k > 0 else '###'}, fps: {fps:.2f} (target is 30)"
             stdscr.addstr(height - 1, 0, status_bar, curses.color_pair(1))
 
-            # draw map
-            for i in range(width):
-                for j in range(height - 1):
-                    id = tiles[i][j]
-                    stdscr.addstr(j, i, char_map[id], curses.color_pair(get_color_pair_id(id)))
-
-            stdscr.addstr(cursor_y, cursor_x, char_map[PLAYER], curses.color_pair(get_color_pair_id(PLAYER if flasher > 2 else PLAYER-1)))
-            flasher = flasher - 1 if flasher > 0 else flasher_max
-
             # decrement
             tiles = [[max(0, i - 1 if 0 < i <= PLAYER else i) for i in j] for j in tiles]
+
+            # draw map
+            for i in range(width - OFFSET_START_X - OFFSET_END_X):
+                for j in range(height - OFFSET_START_Y - OFFSET_END_Y):
+                    tile_id = tiles[i][j]
+                    stdscr.addstr(j, i, char_map[tile_id], curses.color_pair(get_color_pair_id(tile_id)))
+
+            if flasher > 2:
+                stdscr.addstr(cursor_y, cursor_x, char_map[PLAYER], curses.color_pair(get_color_pair_id(PLAYER)))
+            flasher = flasher - 1 if flasher > 0 else flasher_max
+
 
             stdscr.move(0, 0)
 

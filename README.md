@@ -15,4 +15,6 @@ Entry for the 24h game jam hosted on the Lazy-Developpers Discord on April 10 20
 - pause menu
 - quit menu
 - saves
+- ~~some way to destroy walls~~
+- cooldown on block breaking maybe?
  

@@ -5,11 +5,11 @@ Entry for the 24h game jam hosted on the Lazy-Developpers Discord on April 10 20
 - ~~movement~~
 - ~~character collisions~~
 - ~~basic logic for placing stuff~~
-- health
+- ~~health~~
 - enemies
 - enemy collisions
 - loot + inventory
-- dynamic probability randomizer
+- dynamic probability spawn randomizer
 - point system
 - main menu
 - pause menu

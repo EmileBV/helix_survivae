@@ -8,12 +8,14 @@ import time
 from typing import Final
 from math import ceil, floor
 import json
+from random import random
 
 # entity IDs
 WALL: Final = 30
 DOOR: Final = 10
 PLAYER: Final = 9
 TRAP_COLLECT: Final = 11
+HEALTH_COLLECT: Final = 12
 TRAP_SET: Final = 21
 TRAP_PLACED: Final = 22
 
@@ -29,7 +31,10 @@ FLASHER_MAX: Final = 10
 HEALTH_MAX: Final = 100
 HEALTH_BAR_SIZE: Final = 20
 
-TRAP_DAMAGE = 20
+TRAP_DAMAGE: Final = 20
+HEAL_AMOUNT: Final = 10
+
+HEALTH_SPAWN_CHANCE = 0.3
 
 
 def clamp(val, min_val, max_val):
@@ -88,6 +93,8 @@ def get_color_pair_id(obj_id):
         return 6
     elif TRAP_SET <= obj_id < WALL:
         return 7
+    elif obj_id == HEALTH_COLLECT:
+        return 8
     else:
         return 1
 
@@ -107,6 +114,7 @@ def draw_menu(stdscr):
         DOOR: "D",
         WALL: "W",
         TRAP_COLLECT: "x",
+        HEALTH_COLLECT: "+",
         TRAP_SET: "X",
         TRAP_PLACED: "X"
     }
@@ -201,11 +209,20 @@ def draw_menu(stdscr):
                 tiles[player_x][clamp(player_y + 1, OFFSET_START_Y, t_h_max-1)] = 9
                 tiles[player_x][clamp(player_y - 1, OFFSET_START_Y, t_h_max-1)] = 9
 
+            # randomized spawn
+            if random() * 100 <= HEALTH_SPAWN_CHANCE:
+                x, y = floor(random() * t_w_max), floor(random() * t_h_max)
+                if tiles[x][y] < PLAYER:
+                    tiles[x][y] = HEALTH_COLLECT
+
             # damage logic
             if 0 <= tiles[player_x][player_y] <= PLAYER:
                 tiles[player_x][player_y] = PLAYER
             elif tiles[player_x][player_y] == TRAP_SET:
                 health -= TRAP_DAMAGE
+                tiles[player_x][player_y] = PLAYER
+            elif tiles[player_x][player_y] == HEALTH_COLLECT:
+                health = min(health + HEAL_AMOUNT, HEALTH_MAX)
                 tiles[player_x][player_y] = PLAYER
 
             # health and inventory eventually
@@ -218,13 +235,11 @@ def draw_menu(stdscr):
             status_bar = f"Width: {width}, Height: {height}, pressed key: {k:03}, fps: {fps:.2f} (target is 30), pos: x:{player_x}/y:{player_y}"
             stdscr.addstr(height - 1, 0, status_bar, curses.color_pair(1))
 
-            # decrement
-            #tiles = [[max(0, i - 1 if 0 < i <= PLAYER else i) for i in j] for j in tiles]
-
             # draw map
             for i in range(0, t_w_max):
                 for j in range(0, t_h_max):
                     tile_id = tiles[i][j]
+                    # tile state decrement
                     tiles[i][j] = tile_id - 1 if 0 < tile_id <= PLAYER or (tile_id == TRAP_PLACED and (i != player_x or j != player_y)) else tile_id
                     tile_id = tiles[i][j]
                     stdscr.addstr(j+OFFSET_START_Y, i+OFFSET_START_X, char_map[tile_id], curses.color_pair(get_color_pair_id(tile_id)))

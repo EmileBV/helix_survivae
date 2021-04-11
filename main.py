@@ -6,6 +6,7 @@ import sys, os
 import curses
 import time
 from typing import Final
+from math import ceil, floor
 
 # entity IDs
 WALL: Final = 30
@@ -18,6 +19,13 @@ OFFSET_START_X: Final = 0
 OFFSET_START_Y: Final = 1
 OFFSET_END_X: Final = 0
 OFFSET_END_Y: Final = 1
+
+GAME_TIME = 1.0 / 32.0
+
+FLASHER_MAX: Final = 10
+
+HEALTH_MAX: Final = 100
+
 
 def clamp(val, min_val, max_val):
     return max(min_val, min(max_val, val))
@@ -53,7 +61,7 @@ def setup_colors():
     curses.start_color()
     curses.init_pair(1, curses.COLOR_CYAN, curses.COLOR_BLACK)
     curses.init_pair(2, 3, curses.COLOR_BLACK)
-    curses.init_pair(3, curses.COLOR_BLACK, curses.COLOR_BLACK)
+    curses.init_pair(3, curses.COLOR_WHITE, curses.COLOR_BLACK)
     curses.init_pair(4, 6, curses.COLOR_BLACK)
     curses.init_pair(5, 8, curses.COLOR_BLACK)
     curses.init_pair(6, 9, curses.COLOR_BLACK)
@@ -79,7 +87,7 @@ def get_color_pair_id(obj_id):
 
 def draw_menu(stdscr):
     char_map = {
-        0: " ",
+        0: "`",
         1: "•",
         2: "•",
         3: "•",
@@ -109,26 +117,28 @@ def draw_menu(stdscr):
     setup_colors()
 
     fps = 0
-    frame_time = 0.1
-    game_time = 1.0 / 32.0
-    time_acc = game_time
+    time_acc = GAME_TIME
 
-    flasher_max = 10
-    flasher = flasher_max
+    flasher = FLASHER_MAX
+
+    health = HEALTH_MAX
 
     while k != ord('q'):
         start = time.perf_counter()
 
         # Frame limiter
-        if time_acc >= game_time:
+        if time_acc >= GAME_TIME:
             fps = 1 / time_acc
-            time_acc -= game_time
+            time_acc -= GAME_TIME
 
             # Initialization
             stdscr.clear()
             height, width = stdscr.getmaxyx()
 
-            tiles = resize(tiles, height - OFFSET_START_Y - OFFSET_END_Y, width - OFFSET_START_X - OFFSET_END_X)
+            t_h_max = height - OFFSET_START_Y - OFFSET_END_Y+1
+            t_w_max = width - OFFSET_START_X - OFFSET_END_X
+
+            tiles = resize(tiles, t_h_max, t_w_max)
 
             target_x, target_y = cursor_x, cursor_y
             if k == curses.KEY_DOWN:
@@ -140,8 +150,8 @@ def draw_menu(stdscr):
             elif k == curses.KEY_LEFT:
                 target_x = cursor_x - 1
 
-            target_x = clamp(target_x, OFFSET_START_X, width - 1 - OFFSET_END_X)
-            target_y = clamp(target_y, OFFSET_START_Y, height - 1 - OFFSET_END_Y)
+            target_x = clamp(target_x, OFFSET_START_X, t_w_max-1)
+            target_y = clamp(target_y, OFFSET_START_Y, t_h_max-1)
 
             if tiles[target_x][target_y] < WALL:
                 cursor_x, cursor_y = target_x, target_y
@@ -156,31 +166,34 @@ def draw_menu(stdscr):
             elif k == ord('x'):
                 tiles[cursor_x][cursor_y] = TRAP_SET
             elif k == ord(' '):
-                tiles[clamp(cursor_x + 1, OFFSET_START_X, width - 1 - OFFSET_END_X)][cursor_y] = 9
-                tiles[clamp(cursor_x - 1, OFFSET_START_X, width - 1 - OFFSET_END_X)][cursor_y] = 9
-                tiles[cursor_x][clamp(cursor_y + 1, OFFSET_START_Y, height - 1 - OFFSET_END_Y)] = 9
-                tiles[cursor_x][clamp(cursor_y - 1, OFFSET_START_Y, height - 1 - OFFSET_END_Y)] = 9
+                tiles[clamp(cursor_x + 1, OFFSET_START_X, t_w_max-1)][cursor_y] = 9
+                tiles[clamp(cursor_x - 1, OFFSET_START_X, t_w_max-1)][cursor_y] = 9
+                tiles[cursor_x][clamp(cursor_y + 1, OFFSET_START_Y, t_h_max-1)] = 9
+                tiles[cursor_x][clamp(cursor_y - 1, OFFSET_START_Y, t_h_max-1)] = 9
 
             if 0 <= tiles[cursor_x][cursor_y] <= PLAYER:
                 tiles[cursor_x][cursor_y] = PLAYER
 
+            # health and inventory eventually
+            player_info = f"HP: [{'#' * ceil(health/10)}{'-' * floor((HEALTH_MAX-health)/10)}] {health:03}"
+            stdscr.addstr(0, 1, player_info, curses.color_pair(1))
+
             # debug info maybe?
-            status_bar = f"Width: {width}, Height: {height}, pressed key: {k if k > 0 else '###'}, fps: {fps:.2f} (target is 30)"
+            status_bar = f"Width: {width}, Height: {height}, pressed key: {k:03}, fps: {fps:.2f} (target is 30)"
             stdscr.addstr(height - 1, 0, status_bar, curses.color_pair(1))
 
             # decrement
             tiles = [[max(0, i - 1 if 0 < i <= PLAYER else i) for i in j] for j in tiles]
 
             # draw map
-            for i in range(width - OFFSET_START_X - OFFSET_END_X):
-                for j in range(height - OFFSET_START_Y - OFFSET_END_Y):
+            for i in range(OFFSET_START_X, t_w_max):
+                for j in range(OFFSET_START_Y, t_h_max):
                     tile_id = tiles[i][j]
                     stdscr.addstr(j, i, char_map[tile_id], curses.color_pair(get_color_pair_id(tile_id)))
 
             if flasher > 2:
                 stdscr.addstr(cursor_y, cursor_x, char_map[PLAYER], curses.color_pair(get_color_pair_id(PLAYER)))
-            flasher = flasher - 1 if flasher > 0 else flasher_max
-
+            flasher = flasher - 1 if flasher > 0 else FLASHER_MAX
 
             stdscr.move(0, 0)
 
@@ -189,7 +202,6 @@ def draw_menu(stdscr):
 
             # get next input
             k = stdscr.getch()
-
 
         time.sleep(0.0001)
         frame_time = time.perf_counter() - start

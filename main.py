@@ -28,7 +28,7 @@ OFFSET_START_Y: Final = 1
 OFFSET_END_X: Final = 0
 OFFSET_END_Y: Final = 1
 
-TARGET_FPS: Final = 40
+TARGET_FPS: Final = 30
 GAME_TIME: Final = 1.0 / TARGET_FPS
 
 FLASHER_MAX: Final = 10
@@ -136,11 +136,13 @@ def draw_menu(stdscr):
     tiles = [[0 for i in range(10)] for j in range(10)]
     health = HEALTH_MAX
     score = 0
+    hiscore = 0
     is_begin = True
+    quitting = False
 
     if os.path.exists("save"):
         with open("save", "rb") as file:
-            (tiles, player_x, player_y, health, score) = pickle.loads(file.read())
+            (tiles, player_x, player_y, health, score, hiscore) = pickle.loads(file.read())
             is_begin = False
 
     last_dir = 0
@@ -170,30 +172,49 @@ def draw_menu(stdscr):
         if time_acc >= GAME_TIME:
             fps = 1 / time_acc
             time_acc -= GAME_TIME
+            height, width = stdscr.getmaxyx()
 
             if k == 27:
                 paused = not paused
+                quitting = False
 
             if paused:
                 stdscr.addstr(3, 3,  "========[MENU]========", curses.color_pair(1))
                 stdscr.addstr(4, 3,  "=                    =", curses.color_pair(1))
                 stdscr.addstr(5, 3,  "=  [Esc] Continue    =", curses.color_pair(1))
                 stdscr.addstr(6, 3,  "=   [Q]  Save&Quit   =", curses.color_pair(1))
-                stdscr.addstr(7, 3,  "=                    =", curses.color_pair(1))
-                stdscr.addstr(8, 3,  "=====[Game Facts]=====", curses.color_pair(1))
-                stdscr.addstr(9, 3,  "=                    =", curses.color_pair(1))
-                stdscr.addstr(10, 3, "=  @ -> that's you   =", curses.color_pair(1))
-                stdscr.addstr(11, 3, "=  W -> Wall [W] key =", curses.color_pair(1))
-                stdscr.addstr(12, 3, "=  D -> Door [D] key =", curses.color_pair(1))
-                stdscr.addstr(13, 3, "=  X -> Trap [X] key =", curses.color_pair(1))
-                stdscr.addstr(14, 3, "=  + -> Health       =", curses.color_pair(1))
-                stdscr.addstr(15, 3, "=  o -> Bad stuff    =", curses.color_pair(1))
-                stdscr.addstr(16, 3, "=  [Space] -> break  =", curses.color_pair(1))
-                stdscr.addstr(17, 3, "=                    =", curses.color_pair(1))
-                stdscr.addstr(18, 3, "======================", curses.color_pair(1))
+                stdscr.addstr(7, 3,  "=   [R]  Restart     =", curses.color_pair(1))
+                stdscr.addstr(8, 3,  "=                    =", curses.color_pair(1))
+                stdscr.addstr(9, 3,  "=====[Game Facts]=====", curses.color_pair(1))
+                stdscr.addstr(10, 3,  "=                    =", curses.color_pair(1))
+                stdscr.addstr(11, 3, "=  @ -> that's you   =", curses.color_pair(1))
+                stdscr.addstr(12, 3, "=  W -> Wall [W] key =", curses.color_pair(1))
+                stdscr.addstr(13, 3, "=  D -> Door [D] key =", curses.color_pair(1))
+                stdscr.addstr(14, 3, "=  X -> Trap [X] key =", curses.color_pair(1))
+                stdscr.addstr(15, 3, "=  + -> Health       =", curses.color_pair(1))
+                stdscr.addstr(16, 3, "=  o -> Bad stuff    =", curses.color_pair(1))
+                stdscr.addstr(17, 3, "=  [Space] -> break  =", curses.color_pair(1))
+                stdscr.addstr(18, 3, "=                    =", curses.color_pair(1))
+                stdscr.addstr(19, 3, "=====[HIGH SCORE]=====", curses.color_pair(1))
+                stdscr.addstr(20, 3, f"=     {hiscore:010}     =", curses.color_pair(1))
+                stdscr.addstr(21, 3, "======================", curses.color_pair(1))
 
-                if k == ord('q'):
-                    running = False
+                if quitting:
+                    stdscr.addstr(3, 3, "======[QUITTING]======", curses.color_pair(7))
+                    stdscr.addstr(4, 3, "=                    =", curses.color_pair(7))
+                    stdscr.addstr(5, 3, "=   ARE YOU SURE?    =", curses.color_pair(7))
+                    stdscr.addstr(6, 3, "=  (will save game)  =", curses.color_pair(7))
+                    stdscr.addstr(7, 3, "= [Q] yes | [Esc] no =", curses.color_pair(7))
+                    stdscr.addstr(8, 3, "=                    =", curses.color_pair(7))
+                    if k == ord('q'):
+                        running = False
+                else:
+                    if k == ord('q'):
+                        quitting = True
+                    elif k == ord('r'):
+                        is_begin = True
+                        paused = False
+
 
                 stdscr.move(0, 0)
                 stdscr.refresh()
@@ -201,9 +222,9 @@ def draw_menu(stdscr):
                 k = stdscr.getch()
                 continue
 
+
             # Initialization
             stdscr.clear()
-            height, width = stdscr.getmaxyx()
 
             t_h_max = height - OFFSET_START_Y - OFFSET_END_Y
             t_w_max = width - OFFSET_START_X - OFFSET_END_X
@@ -211,14 +232,14 @@ def draw_menu(stdscr):
             tiles = resize(tiles, t_h_max, t_w_max)
 
             if health <= 0:
-                health = HEALTH_MAX
-                score = 0
-                tiles = [[0 for i in range(t_h_max)] for j in range(t_w_max)]
                 is_begin = True
 
             if is_begin:
                 player_x = round(t_w_max / 2)
                 player_y = round(t_h_max / 2)
+                health = HEALTH_MAX
+                score = 0
+                tiles = [[0 for i in range(t_h_max)] for j in range(t_w_max)]
                 is_begin = False
 
             target_x, target_y = player_x, player_y
@@ -311,11 +332,13 @@ def draw_menu(stdscr):
                         tiles[i][j] = 8
 
                         if int(tiles[x][y]) == TRAP_SET:
+                            del tile
                             if randint(0, 2) == 0:
                                 tiles[x][y] = 9
                             score += 100
                             store = False
                         elif x == player_x and y == player_y:
+                            del tile
                             tiles[x][y] = 9
                             health -= ENEMY_SMALL_DAMAGE
                             store = False
@@ -336,6 +359,21 @@ def draw_menu(stdscr):
             player_info = f"HP: [{'#' * ceil(health / HEALTH_MAX * HEALTH_BAR_SIZE)}{'-' * floor((HEALTH_MAX - health) / HEALTH_MAX * HEALTH_BAR_SIZE)}] {health:03}"
             score_bar = f" | SCORE: {score:010}"
             destroy_bar = f" | BREAK: [{'#' * ceil(destroy_timer / DESTROY_DELAY * 6)}{'-' * floor((DESTROY_DELAY - destroy_timer) / DESTROY_DELAY * 6)}]"
+
+            if width < len(player_info) + len(destroy_bar) + len(destroy_bar) + 3:
+                stdscr.addstr(3, 3, "====[ALERT]=====", curses.color_pair(1))
+                stdscr.addstr(4, 3, "=   PLEASE     =", curses.color_pair(1))
+                stdscr.addstr(5, 3, "=   MAKE       =", curses.color_pair(1))
+                stdscr.addstr(6, 3, "=   WINDOW     =", curses.color_pair(1))
+                stdscr.addstr(7, 3, "=   WIDER     =", curses.color_pair(1))
+                stdscr.addstr(8, 3, "================", curses.color_pair(1))
+
+                stdscr.move(0, 0)
+                stdscr.refresh()
+                # get next input
+                k = stdscr.getch()
+                continue
+
             stdscr.addstr(0, 1, player_info, curses.color_pair(8))
             stdscr.addstr(0, len(player_info) + 1, destroy_bar, curses.color_pair(9))
             stdscr.addstr(0, len(player_info) + len(destroy_bar) + 1, score_bar, curses.color_pair(3))
@@ -359,6 +397,9 @@ def draw_menu(stdscr):
                 stdscr.addstr(cursor_y, cursor_x, char_map[PLAYER], curses.color_pair(get_color_pair_id(PLAYER)))
             flasher = flasher - 1 if flasher > 0 else FLASHER_MAX
 
+            if hiscore < score:
+                hiscore = score
+
             stdscr.move(0, 0)
 
             # Refresh the screen
@@ -372,7 +413,7 @@ def draw_menu(stdscr):
         time_acc += frame_time
 
     with open("save", "wb") as file:
-        file.write(pickle.dumps((tiles, player_x, player_y, health, score)))
+        file.write(pickle.dumps((tiles, player_x, player_y, health, score, hiscore)))
 
 
 def main():

@@ -85,11 +85,11 @@
    'd:\\personal '
    'projects\\lazydevs\\flash-jam-1\\venv\\lib\\site-packages\\_curses.cp39-win_amd64.pyd',
    'EXTENSION'),
-  ('python39.dll',
-   'C:\\Users\\Emile\\AppData\\Local\\Programs\\Python\\Python39\\python39.dll',
-   'BINARY'),
   ('VCRUNTIME140.dll',
    'C:\\Users\\Emile\\AppData\\Local\\Programs\\Python\\Python39\\VCRUNTIME140.dll',
+   'BINARY'),
+  ('python39.dll',
+   'C:\\Users\\Emile\\AppData\\Local\\Programs\\Python\\Python39\\python39.dll',
    'BINARY'),
   ('libssl-1_1.dll',
    'C:\\Users\\Emile\\AppData\\Local\\Programs\\Python\\Python39\\DLLs\\libssl-1_1.dll',
@@ -115,7 +115,7 @@
  [],
  False,
  False,
- 1618104311,
+ 1618154753,
  [('run.exe',
    'd:\\personal '
    'projects\\lazydevs\\flash-jam-1\\venv\\lib\\site-packages\\PyInstaller\\bootloader\\Windows-64bit\\run.exe',

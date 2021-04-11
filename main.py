@@ -7,7 +7,7 @@ import curses
 import time
 from typing import Final
 from math import ceil, floor
-import json
+import pickle
 from random import random
 
 # entity IDs
@@ -128,9 +128,9 @@ def draw_menu(stdscr):
     score = 0
     is_begin = True
 
-    if os.path.exists("save.json"):
-        with open("save.json", "r") as file:
-            (tiles, player_x, player_y, health, score) = json.loads(file.read())
+    if os.path.exists("save"):
+        with open("save", "rb") as file:
+            (tiles, player_x, player_y, health, score) = pickle.loads(file.read())
             is_begin = False
 
     last_dir = 0
@@ -260,8 +260,8 @@ def draw_menu(stdscr):
         frame_time = time.perf_counter() - start
         time_acc += frame_time
 
-    with open("save.json", "w") as file:
-        file.write(json.dumps((tiles, player_x, player_y, health, score)))
+    with open("save", "wb") as file:
+        file.write(pickle.dumps((tiles, player_x, player_y, health, score)))
 
 
 def main():

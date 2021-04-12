@@ -37,7 +37,7 @@ deactivate () {
 # unset irrelevant variables
 deactivate nondestructive
 
-VIRTUAL_ENV="D:\Personal Projects\LazyDevs\flash-jam-1\venv"
+VIRTUAL_ENV="D:\Personal Projects\LazyDevs\helix_survivae\venv"
 export VIRTUAL_ENV
 
 _OLD_VIRTUAL_PATH="$PATH"

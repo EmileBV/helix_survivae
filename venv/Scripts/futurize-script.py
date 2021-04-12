@@ -1,4 +1,4 @@
-#!"d:\personal projects\lazydevs\flash-jam-1\venv\scripts\python.exe"
+#!"d:\personal projects\lazydevs\helix_survivae\venv\scripts\python.exe"
 # EASY-INSTALL-ENTRY-SCRIPT: 'future==0.18.2','console_scripts','futurize'
 import re
 import sys

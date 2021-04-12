@@ -115,7 +115,7 @@
  [],
  False,
  False,
- 1618256801,
+ 1618257029,
  [('run.exe',
    'd:\\personal '
    'projects\\lazydevs\\helix_survivae\\venv\\lib\\site-packages\\PyInstaller\\bootloader\\Windows-64bit\\run.exe',

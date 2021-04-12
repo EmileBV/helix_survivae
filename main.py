@@ -280,7 +280,7 @@ def draw_menu(stdscr):
             # randomized spawn
             if random() * 100 <= HEALTH_SPAWN_CHANCE:
                 x, y = floor(random() * t_w_max), floor(random() * t_h_max)
-                if tiles[x][y] < PLAYER:
+                if int(tiles[x][y]) < PLAYER:
                     tiles[x][y] = HEALTH_COLLECT
             # fps = ENEMY_SPAWN_CHANCE * (1 + (score/1000))
             if random() * 100 <= ENEMY_SPAWN_CHANCE * (1 + (score / 1000)):

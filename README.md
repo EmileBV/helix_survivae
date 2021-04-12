@@ -3,7 +3,7 @@ Entry for the 24h game jam hosted on the Lazy-Developpers Discord server on Apri
 
 ## How to use
 #### to run it:
-- Execute `helix_survivae.exe` in ./dist
+- Execute `helix_survivae.exe` in `./dist`
 
 #### to modify it:
 1. Open the repo in PyCharm

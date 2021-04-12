@@ -2,14 +2,13 @@
 # to package: pyinstaller main.py --onefile --icon=icon.ico --name=helix_survivae
 #
 
-import sys, os
+import os
 import curses
 import time
 from typing import Final
 from math import ceil, floor
 import pickle
 from random import random, randint
-from copy import copy, deepcopy
 
 from Enemy import Enemy
 
@@ -179,14 +178,14 @@ def draw_menu(stdscr):
                 quitting = False
 
             if paused:
-                stdscr.addstr(3, 3,  "========[MENU]========", curses.color_pair(1))
-                stdscr.addstr(4, 3,  "=                    =", curses.color_pair(1))
-                stdscr.addstr(5, 3,  "=  [Esc] Continue    =", curses.color_pair(1))
-                stdscr.addstr(6, 3,  "=   [Q]  Save&Quit   =", curses.color_pair(1))
-                stdscr.addstr(7, 3,  "=   [R]  Restart     =", curses.color_pair(1))
-                stdscr.addstr(8, 3,  "=                    =", curses.color_pair(1))
-                stdscr.addstr(9, 3,  "=====[Game Facts]=====", curses.color_pair(1))
-                stdscr.addstr(10, 3,  "=                    =", curses.color_pair(1))
+                stdscr.addstr(3, 3, "========[MENU]========", curses.color_pair(1))
+                stdscr.addstr(4, 3, "=                    =", curses.color_pair(1))
+                stdscr.addstr(5, 3, "=  [Esc] Continue    =", curses.color_pair(1))
+                stdscr.addstr(6, 3, "=   [Q]  Save&Quit   =", curses.color_pair(1))
+                stdscr.addstr(7, 3, "=   [R]  Restart     =", curses.color_pair(1))
+                stdscr.addstr(8, 3, "=                    =", curses.color_pair(1))
+                stdscr.addstr(9, 3, "=====[Game Facts]=====", curses.color_pair(1))
+                stdscr.addstr(10, 3, "=                    =", curses.color_pair(1))
                 stdscr.addstr(11, 3, "=  @ -> that's you   =", curses.color_pair(1))
                 stdscr.addstr(12, 3, "=  W -> Wall [W] key =", curses.color_pair(1))
                 stdscr.addstr(13, 3, "=  D -> Door [D] key =", curses.color_pair(1))
@@ -215,13 +214,11 @@ def draw_menu(stdscr):
                         is_begin = True
                         paused = False
 
-
                 stdscr.move(0, 0)
                 stdscr.refresh()
                 # get next input
                 k = stdscr.getch()
                 continue
-
 
             # Initialization
             stdscr.clear()
@@ -282,7 +279,6 @@ def draw_menu(stdscr):
                 x, y = floor(random() * t_w_max), floor(random() * t_h_max)
                 if int(tiles[x][y]) < PLAYER:
                     tiles[x][y] = HEALTH_COLLECT
-            # fps = ENEMY_SPAWN_CHANCE * (1 + (score/1000))
             if random() * 100 <= ENEMY_SPAWN_CHANCE * (1 + (score / 1000)):
                 # 1: top | 2: right | 3: bottom | 4: left
                 side = randint(1, 4)
@@ -360,6 +356,7 @@ def draw_menu(stdscr):
             score_bar = f" | SCORE: {score:010}"
             destroy_bar = f" | BREAK: [{'#' * ceil(destroy_timer / DESTROY_DELAY * 6)}{'-' * floor((DESTROY_DELAY - destroy_timer) / DESTROY_DELAY * 6)}]"
 
+            # alert for when user scales down the window too much
             if width < len(player_info) + len(destroy_bar) + len(destroy_bar) + 3:
                 stdscr.addstr(3, 3, "====[ALERT]=====", curses.color_pair(1))
                 stdscr.addstr(4, 3, "=   PLEASE     =", curses.color_pair(1))

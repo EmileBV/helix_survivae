@@ -115,7 +115,7 @@
  [],
  False,
  False,
- 1618179048,
+ 1618179850,
  [('run.exe',
    'd:\\personal '
    'projects\\lazydevs\\flash-jam-1\\venv\\lib\\site-packages\\PyInstaller\\bootloader\\Windows-64bit\\run.exe',

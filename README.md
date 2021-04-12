@@ -6,7 +6,7 @@ Entry for the 24h game jam hosted on the Lazy-Developpers Discord on April 10 20
 - ~~character collisions~~
 - ~~basic logic for placing stuff~~
 - ~~health~~
-- enemies
+- ~~enemies~~
 - ~~enemy collisions~~
 - loot + inventory
 - ~~dynamic probability spawn randomizer~~
